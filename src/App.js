@@ -7,6 +7,20 @@ const TABS = ["Overview", "Gear", "Meals", "Groceries", "Activities"];
 const DAYS = ["Day 1 (Apr 4)", "Day 2 (Apr 5)", "Day 3 (Apr 6)"];
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snacks"];
 const GROCERY_CATS = ["Vegetables", "Fruits", "Meat & Seafood", "Dairy", "Dry & Pantry", "Snacks & Drinks", "Other"];
+const GEAR_CATS = ["Shelter & Sleep", "Cooking & Fire", "Sports & Games", "Clothing & Personal", "Safety & Health", "Other"];
+const gearCatColors = {
+  "Shelter & Sleep": "#3a65a8", "Cooking & Fire": "#c0392b", "Sports & Games": "#d4700a",
+  "Clothing & Personal": "#8e44ad", "Safety & Health": "#2e7d4f", "Other": "#7f8c8d",
+};
+const gearCategory = (item) => {
+  const n = item.toLowerCase();
+  if (/tent|sleep|esky|chair|mattress|pillow|tarp|hammock/.test(n)) return "Shelter & Sleep";
+  if (/stove|cook|fire|wood|log|kettle|pot|pan|grill|bbq|induction|cooktop/.test(n)) return "Cooking & Fire";
+  if (/ball|bike|volley|paddle|cricket|board|chess|soccer|football|frisbee|game|card/.test(n)) return "Sports & Games";
+  if (/boot|shoe|jacket|rain|sun|sunscreen|tissue|towel|cloth|wear|hat|sock/.test(n)) return "Clothing & Personal";
+  if (/first aid|medical|kit|safety|torch|light|lantern|whistle/.test(n)) return "Safety & Health";
+  return "Other";
+};
 const TRIP = { name: "Lake Leschenaultia Camping", date: "April 4–6, 2026", location: "Lake Leschenaultia, WA" };
 const memberColors = { SaMeg: "#c45e38", PraKrithi: "#3a65a8", NagKav: "#2e7d4f" };
 const catColors = {
@@ -82,7 +96,7 @@ export default function App() {
 
   const [egId, setEgId] = useState(null); const [eg, setEg] = useState({});
   const [addGearOpen, setAddGearOpen] = useState(false);
-  const [ngItem, setNgItem] = useState(""); const [ngTo, setNgTo] = useState("SaMeg");
+  const [ngItem, setNgItem] = useState(""); const [ngTo, setNgTo] = useState("SaMeg"); const [ngCat, setNgCat] = useState("Other");
 
   const [emId, setEmId] = useState(null); const [em, setEm] = useState({});
   const [addMealOpen, setAddMealOpen] = useState(false);
@@ -114,7 +128,7 @@ export default function App() {
   // Gear
   const togglePacked = (id, cur) => updateDoc(doc(db, "gear", id), { packed: !cur });
   const toggleGearConfirm = (id, member, cur) => updateDoc(doc(db, "gear", id), { [`confirmed.${member}`]: !cur });
-  const addGear = async () => { if (!ngItem.trim()) return; await addDoc(collection(db, "gear"), { item: ngItem, assignedTo: ngTo, addedBy: who, packed: false, confirmed: noConfirm }); setNgItem(""); setAddGearOpen(false); };
+  const addGear = async () => { if (!ngItem.trim()) return; await addDoc(collection(db, "gear"), { item: ngItem, assignedTo: ngTo, addedBy: who, packed: false, confirmed: noConfirm, category: ngCat || gearCategory(ngItem) }); setNgItem(""); setAddGearOpen(false); };
   const saveGear = async (id) => { if (!eg.item?.trim()) return; await updateDoc(doc(db, "gear", id), { item: eg.item, assignedTo: eg.assignedTo }); setEgId(null); };
   const delGear = async (id) => { await deleteDoc(doc(db, "gear", id)); setEgId(null); };
 
@@ -265,38 +279,52 @@ export default function App() {
             </div>
             {addGearOpen && (
               <div style={{ background: "#fff", border: "1px solid #d4c9b8", borderRadius: 12, padding: "16px", marginBottom: 8, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
-                <div style={{ fontSize: 11, color: memberColors[who], fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}><Avatar name={who} size={16} /> {who} is adding</div>
-                <input value={ngItem} onChange={e => setNgItem(e.target.value)} onKeyDown={e => e.key === "Enter" && addGear()} placeholder="e.g. Bug spray, rain jackets…" style={IS} autoFocus />
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{ fontSize: 12, color: "#6a6058", whiteSpace: "nowrap" }}>Assign to:</span>
+                <div style={{ fontSize: 11, color: memberColors[who === "All" ? "SaMeg" : who], fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}><Avatar name={who === "All" ? "SaMeg" : who} size={16} /> Adding item</div>
+                <input value={ngItem} onChange={e => { setNgItem(e.target.value); setNgCat(gearCategory(e.target.value)); }} onKeyDown={e => e.key === "Enter" && addGear()} placeholder="e.g. Sunscreen, Cricket set…" style={IS} autoFocus />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <select value={ngCat} onChange={e => setNgCat(e.target.value)} style={{ ...SS, flex: 1 }}>{GEAR_CATS.map(c => <option key={c}>{c}</option>)}</select>
                   <select value={ngTo} onChange={e => setNgTo(e.target.value)} style={{ ...SS, flex: 1 }}>{MEMBERS.map(m => <option key={m}>{m}</option>)}</select>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={addGear}>Add Item</button><button className="clnk" onClick={() => setAddGearOpen(false)}>✕ Cancel</button></div>
               </div>
             )}
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-              {visibleGear.map(g => { const editing = egId === g.id; const conf = g.confirmed || {}; return (
-                <div key={g.id}>
-                  <div className="row" style={rowBase(editing, g.packed ? "1px solid #7ab87a" : undefined)}>
-                    <button onClick={() => togglePacked(g.id, g.packed)} style={{ width: 20, height: 20, borderRadius: 5, border: g.packed ? "none" : "2px solid #b0c8b0", background: g.packed ? "#3a7a4a" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
-                      {g.packed && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900 }}>✓</span>}
-                    </button>
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: g.packed ? "#a09080" : "#2d2a24", textDecoration: g.packed ? "line-through" : "none" }}>{g.item}</span>
-                    <FamilyChecks confirmed={conf} onToggle={m => toggleGearConfirm(g.id, m, conf[m])} />
-                    <IBtn emoji="✏️" title="Edit" onClick={() => editing ? setEgId(null) : (setEg({ item: g.item, assignedTo: g.assignedTo }), setEgId(g.id), setAddGearOpen(false))} />
-                    <IBtn emoji="🗑" title="Delete" onClick={() => delGear(g.id)} />
+            {GEAR_CATS.map(cat => {
+              const items = visibleGear.filter(g => (g.category || gearCategory(g.item)) === cat);
+              if (!items.length) return null;
+              const cc = gearCatColors[cat];
+              return (
+                <div key={cat} style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
+                    <div style={{ width: 3, height: 14, background: cc, borderRadius: 3 }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: cc, textTransform: "uppercase" }}>{cat}</span>
+                    <span style={{ fontSize: 10, color: "#b0a090" }}>({items.filter(x => x.packed).length}/{items.length} packed)</span>
                   </div>
-                  {editing && <EditDrawer>
-                    <input value={eg.item} onChange={e => setEg(v => ({ ...v, item: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveGear(g.id)} style={IS} autoFocus />
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <span style={{ fontSize: 12, color: "#6a6058", whiteSpace: "nowrap" }}>Assigned to:</span>
-                      <select value={eg.assignedTo} onChange={e => setEg(v => ({ ...v, assignedTo: e.target.value }))} style={{ ...SS, flex: 1 }}>{MEMBERS.map(m => <option key={m}>{m}</option>)}</select>
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={() => saveGear(g.id)}>Save</button><button className="clnk" onClick={() => setEgId(null)}>✕ Cancel</button></div>
-                  </EditDrawer>}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                    {items.map(g => { const editing = egId === g.id; const conf = g.confirmed || {}; return (
+                      <div key={g.id}>
+                        <div className="row" style={rowBase(editing, g.packed ? "1px solid #7ab87a" : undefined)}>
+                          <button onClick={() => togglePacked(g.id, g.packed)} style={{ width: 20, height: 20, borderRadius: 5, border: g.packed ? "none" : "2px solid #b0c8b0", background: g.packed ? "#3a7a4a" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
+                            {g.packed && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900 }}>✓</span>}
+                          </button>
+                          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: g.packed ? "#a09080" : "#2d2a24", textDecoration: g.packed ? "line-through" : "none" }}>{g.item}</span>
+                          <FamilyChecks confirmed={conf} onToggle={m => toggleGearConfirm(g.id, m, conf[m])} />
+                          <IBtn emoji="✏️" title="Edit" onClick={() => editing ? setEgId(null) : (setEg({ item: g.item, assignedTo: g.assignedTo, category: g.category || gearCategory(g.item) }), setEgId(g.id), setAddGearOpen(false))} />
+                          <IBtn emoji="🗑" title="Delete" onClick={() => delGear(g.id)} />
+                        </div>
+                        {editing && <EditDrawer>
+                          <input value={eg.item} onChange={e => setEg(v => ({ ...v, item: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveGear(g.id)} style={IS} autoFocus />
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <select value={eg.category || gearCategory(eg.item || "")} onChange={e => setEg(v => ({ ...v, category: e.target.value }))} style={{ ...SS, flex: 1 }}>{GEAR_CATS.map(c => <option key={c}>{c}</option>)}</select>
+                            <select value={eg.assignedTo} onChange={e => setEg(v => ({ ...v, assignedTo: e.target.value }))} style={{ ...SS, flex: 1 }}>{MEMBERS.map(m => <option key={m}>{m}</option>)}</select>
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={() => saveGear(g.id)}>Save</button><button className="clnk" onClick={() => setEgId(null)}>✕ Cancel</button></div>
+                        </EditDrawer>}
+                      </div>
+                    ); })}
+                  </div>
                 </div>
-              ); })}
-            </div>
+              );
+            })}
             <p style={{ marginTop: 10, fontSize: 11, color: "#b0a090", textAlign: "center" }}>Tap coloured boxes to volunteer · ✏️ edit · 🗑 delete</p>
           </div>
         )}

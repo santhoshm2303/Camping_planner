@@ -16,12 +16,12 @@ export const db = getFirestore(app);
 const NC = { SaMeg: false, PraKrithi: false, NagKav: false };
 
 const SEED_GEAR = [
-  { item: "Tent (6-person)", assignedTo: "NagKav", addedBy: "NagKav", packed: false, confirmed: NC },
-  { item: "Sleeping bags x3", assignedTo: "SaMeg", addedBy: "SaMeg", packed: false, confirmed: NC },
-  { item: "Camp stove", assignedTo: "PraKrithi", addedBy: "PraKrithi", packed: false, confirmed: NC },
-  { item: "Lanterns", assignedTo: "NagKav", addedBy: "NagKav", packed: false, confirmed: NC },
-  { item: "First aid kit", assignedTo: "SaMeg", addedBy: "SaMeg", packed: false, confirmed: NC },
-  { item: "Hiking boots", assignedTo: "PraKrithi", addedBy: "PraKrithi", packed: false, confirmed: NC },
+  { item: "Tent (6-person)", assignedTo: "NagKav", addedBy: "NagKav", packed: false, confirmed: NC, category: "Shelter & Sleep" },
+  { item: "Sleeping bags x3", assignedTo: "SaMeg", addedBy: "SaMeg", packed: false, confirmed: NC, category: "Shelter & Sleep" },
+  { item: "Camp stove", assignedTo: "PraKrithi", addedBy: "PraKrithi", packed: false, confirmed: NC, category: "Cooking & Fire" },
+  { item: "Lanterns", assignedTo: "NagKav", addedBy: "NagKav", packed: false, confirmed: NC, category: "Safety & Health" },
+  { item: "First aid kit", assignedTo: "SaMeg", addedBy: "SaMeg", packed: false, confirmed: NC, category: "Safety & Health" },
+  { item: "Hiking boots", assignedTo: "PraKrithi", addedBy: "PraKrithi", packed: false, confirmed: NC, category: "Clothing & Personal" },
 ];
 const SEED_MEALS = [
   { day: "Day 1 (Apr 4)", meal: "Dinner", name: "Hot dogs & s'mores", chef: "NagKav", confirmed: NC },
