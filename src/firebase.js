@@ -47,20 +47,22 @@ const SEED_ACTIVITIES = [
   { name: "Canoe / kayaking", day: "Day 3 (Apr 6)", suggestedBy: "SaMeg", votes: 4, votedBy: [] },
 ];
 
-export async function seedIfEmpty(colName, seeds) {
+// SAFE seed: only adds missing items by name — never deletes existing data
+export async function seedIfEmpty(colName, seeds, nameField = "name") {
   const snap = await getDocs(collection(db, colName));
-  if (snap.size < seeds.length) {
-    for (const d of snap.docs) await deleteDoc(doc(db, colName, d.id));
+  if (snap.empty) {
+    // Collection is completely empty — seed everything
     for (const s of seeds) await addDoc(collection(db, colName), s);
   }
+  // If collection has data, leave it completely alone
 }
 
 export async function seedAll() {
   await Promise.all([
-    seedIfEmpty("gear", SEED_GEAR),
-    seedIfEmpty("meals", SEED_MEALS),
-    seedIfEmpty("groceries", SEED_GROCERIES),
-    seedIfEmpty("activities", SEED_ACTIVITIES),
+    seedIfEmpty("gear", SEED_GEAR, "item"),
+    seedIfEmpty("meals", SEED_MEALS, "name"),
+    seedIfEmpty("groceries", SEED_GROCERIES, "item"),
+    seedIfEmpty("activities", SEED_ACTIVITIES, "name"),
   ]);
 }
 

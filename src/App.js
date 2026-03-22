@@ -186,12 +186,12 @@ export default function App() {
           <span style={{ color: "rgba(255,255,255,0.9)", fontSize: 12 }}>📅 {TRIP.date}</span>
           <span style={{ color: "rgba(255,255,255,0.9)", fontSize: 12 }}>📍 {TRIP.location}</span>
         </div>
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8, fontWeight: 700 }}>You are</div>
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8, fontWeight: 700 }}>Filter by</div>
         <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-          {MEMBERS.map(m => { const a = who === m; const c = memberColors[m]; return (
-            <button key={m} className="pill" onClick={() => setWho(m)} style={{ display: "flex", alignItems: "center", gap: 6, background: "#fff", border: a ? "3px solid #1a1a1a" : "2px solid #d0c8bc", borderRadius: 20, padding: "5px 12px 5px 5px", cursor: "pointer", transition: "all 0.2s" }}>
-              <Avatar name={m} size={22} />
-              <span style={{ fontSize: 12, fontWeight: a ? 700 : 600, color: a ? c : "#2d2a24" }}>{m}</span>
+          {["All", ...MEMBERS].map(m => { const a = who === m; const c = m === "All" ? "#fff" : memberColors[m]; return (
+            <button key={m} className="pill" onClick={() => setWho(m)} style={{ display: "flex", alignItems: "center", gap: 6, background: "#fff", border: a ? "3px solid #1a1a1a" : "2px solid #d0c8bc", borderRadius: 20, padding: m === "All" ? "5px 14px" : "5px 12px 5px 5px", cursor: "pointer", transition: "all 0.2s" }}>
+              {m !== "All" && <Avatar name={m} size={22} />}
+              <span style={{ fontSize: 12, fontWeight: a ? 700 : 600, color: a ? (m === "All" ? "#2d2a24" : c) : "#2d2a24" }}>{m}</span>
             </button>
           ); })}
         </div>
