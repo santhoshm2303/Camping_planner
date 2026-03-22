@@ -143,7 +143,15 @@ export default function App() {
   const packed = gear.filter(g => g.packed).length;
   const bought = groceries.filter(g => g.bought).length;
   const mealNames = ["(General)", ...meals.map(m => m.name)];
-  const filteredGroceries = grocFilter === "All" ? groceries : grocFilter === "Bought" ? groceries.filter(g => g.bought) : grocFilter === "Needed" ? groceries.filter(g => !g.bought) : groceries.filter(g => g.category === grocFilter);
+
+  const personFilter = (items, assignField) => who === "All" ? items : items.filter(x =>
+    x[assignField] === who || x.addedBy === who || (x.confirmed && x.confirmed[who])
+  );
+  const visibleGear = personFilter(gear, "assignedTo");
+  const visibleMeals = personFilter(meals, "chef");
+  const visibleGroceries = personFilter(groceries, "addedBy");
+
+  const filteredGroceries = grocFilter === "All" ? visibleGroceries : grocFilter === "Bought" ? visibleGroceries.filter(g => g.bought) : grocFilter === "Needed" ? visibleGroceries.filter(g => !g.bought) : visibleGroceries.filter(g => g.category === grocFilter);
   const daysLeft = Math.max(0, Math.ceil((new Date("2026-04-04") - new Date()) / 86400000));
 
   return (
@@ -267,7 +275,7 @@ export default function App() {
               </div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-              {gear.map(g => { const editing = egId === g.id; const conf = g.confirmed || {}; return (
+              {visibleGear.map(g => { const editing = egId === g.id; const conf = g.confirmed || {}; return (
                 <div key={g.id}>
                   <div className="row" style={rowBase(editing, g.packed ? "1px solid #7ab87a" : undefined)}>
                     <button onClick={() => togglePacked(g.id, g.packed)} style={{ width: 20, height: 20, borderRadius: 5, border: g.packed ? "none" : "2px solid #b0c8b0", background: g.packed ? "#3a7a4a" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
@@ -311,7 +319,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={addMeal}>Add Meal</button><button className="clnk" onClick={() => setAddMealOpen(false)}>✕ Cancel</button></div>
               </div>
             )}
-            {DAYS.map(day => { const dm = meals.filter(m => m.day === day); return (
+            {DAYS.map(day => { const dm = visibleMeals.filter(m => m.day === day); return (
               <div key={day} style={{ marginBottom: 18 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", color: "#3a7a4a", textTransform: "uppercase", marginBottom: 7, paddingLeft: 2 }}>{day}</div>
                 {dm.length === 0
