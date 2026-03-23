@@ -84,9 +84,44 @@ const Spinner = () => (
   </div>
 );
 
+const ViewToggle = ({ tileView, onSwitch }) => (
+  <div style={{ display: "flex", gap: 3, background: "#f0ece4", borderRadius: 20, padding: 3 }}>
+    {[{ v: false, icon: "☰" }, { v: true, icon: "⊞" }].map(({ v, icon }) => (
+      <button key={String(v)} onClick={() => onSwitch(v)} style={{ background: tileView === v ? "#fff" : "transparent", border: tileView === v ? "1.5px solid #d4c9b8" : "1.5px solid transparent", borderRadius: 17, padding: "4px 10px", fontSize: 13, cursor: "pointer", color: tileView === v ? "#2d2a24" : "#9a8a7a", fontWeight: tileView === v ? 700 : 400 }}>{icon}</button>
+    ))}
+  </div>
+);
+
+const TileGrid = ({ groups, onDrill }) => (
+  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+    {groups.map(({ cat, color, icon, items, countLabel, doneCount }) => (
+      <button key={cat} onClick={() => onDrill(cat)} style={{ background: "#fff", border: `2px solid ${color}30`, borderRadius: 14, padding: "14px 12px", cursor: "pointer", textAlign: "left", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: 4, bottom: 0, background: color, borderRadius: "14px 0 0 14px" }} />
+        <div style={{ paddingLeft: 8 }}>
+          <div style={{ fontSize: 22, marginBottom: 6 }}>{icon}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#2d2a24", marginBottom: 4, lineHeight: 1.2 }}>{cat}</div>
+          <div style={{ fontSize: 11, color: "#9a8a7a", marginBottom: 8 }}>{doneCount}/{items.length} {countLabel}</div>
+          <div style={{ background: "#e8e0d4", borderRadius: 10, height: 5, overflow: "hidden" }}>
+            <div style={{ width: `${items.length ? doneCount / items.length * 100 : 0}%`, height: "100%", background: color, borderRadius: 10 }} />
+          </div>
+          <div style={{ marginTop: 8, fontSize: 10, color, fontWeight: 600 }}>Tap to view →</div>
+        </div>
+      </button>
+    ))}
+  </div>
+);
+
 export default function App() {
   const [tab, setTab] = useState("Overview");
   const [who, setWho] = useState("SaMeg");
+  const [tileView, setTileView] = useState(false);
+  const [drillCat, setDrillCat] = useState(null);
+  const [collapsedGear, setCollapsedGear] = useState({});
+  const [collapsedGroc, setCollapsedGroc] = useState({});
+  const toggleGearGroup = (cat) => setCollapsedGear(v => ({ ...v, [cat]: !v[cat] }));
+  const toggleGrocGroup = (cat) => setCollapsedGroc(v => ({ ...v, [cat]: !v[cat] }));
+  const switchTab = (t) => { setTab(t); setDrillCat(null); };
+  const switchView = (v) => { setTileView(v); setDrillCat(null); };
   const [loading, setLoading] = useState(true);
 
   const [gear, setGear] = useState([]);
@@ -221,7 +256,7 @@ export default function App() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 2, padding: "10px 14px", background: "#fff", borderBottom: "1px solid #e8e0d4", overflowX: "auto", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-        {TABS.map(t => <button key={t} onClick={() => setTab(t)} style={{ background: "#fff", color: "#2d2a24", border: tab === t ? "3px solid #1a1a1a" : "2px solid #ccc3b4", borderRadius: 20, padding: "7px 15px", fontSize: 12, fontWeight: tab === t ? 700 : 600, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", fontFamily: "'DM Sans',sans-serif" }}>{t}</button>)}
+        {TABS.map(t => <button key={t} onClick={() => switchTab(t)} style={{ background: "#fff", color: "#2d2a24", border: tab === t ? "3px solid #1a1a1a" : "2px solid #ccc3b4", borderRadius: 20, padding: "7px 15px", fontSize: 12, fontWeight: tab === t ? 700 : 600, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", fontFamily: "'DM Sans',sans-serif" }}>{t}</button>)}
       </div>
 
       <div style={{ padding: "16px 16px 0" }}>
@@ -270,13 +305,20 @@ export default function App() {
         {!loading && tab === "Gear" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 17 }}>Gear List <span style={{ fontSize: 12, color: "#9a8a7a", fontFamily: "'DM Sans',sans-serif" }}>({packed}/{gear.length} packed)</span></span>
-              <button className="abtn" onClick={() => { setAddGearOpen(v => !v); setEgId(null); }}>+ Add</button>
+              <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 17 }}>
+                {drillCat ? <button onClick={() => setDrillCat(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, fontFamily: "'Playfair Display',serif", color: "#2d2a24", padding: 0 }}>◀ {drillCat}</button> : <>Gear List <span style={{ fontSize: 12, color: "#9a8a7a", fontFamily: "'DM Sans',sans-serif" }}>({packed}/{gear.length})</span></>}
+              </span>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {!drillCat && <ViewToggle tileView={tileView} onSwitch={switchView} />}
+                <button className="abtn" onClick={() => { setAddGearOpen(v => !v); setEgId(null); }}>+ Add</button>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 10, marginBottom: 12, padding: "8px 12px", background: "#fff", borderRadius: 10, border: "1px solid #e8e0d4", alignItems: "center" }}>
-              <span style={{ fontSize: 11, color: "#9a8a7a", fontWeight: 600 }}>Who's bringing it:</span>
-              {MEMBERS.map(m => <div key={m} style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 12, height: 12, borderRadius: 3, background: memberColors[m] }} /><span style={{ fontSize: 11, color: memberColors[m], fontWeight: 600 }}>{m}</span></div>)}
-            </div>
+            {!drillCat && !tileView && (
+              <div style={{ display: "flex", gap: 10, marginBottom: 12, padding: "8px 12px", background: "#fff", borderRadius: 10, border: "1px solid #e8e0d4", alignItems: "center" }}>
+                <span style={{ fontSize: 11, color: "#9a8a7a", fontWeight: 600 }}>Who's bringing it:</span>
+                {MEMBERS.map(m => <div key={m} style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 12, height: 12, borderRadius: 3, background: memberColors[m] }} /><span style={{ fontSize: 11, color: memberColors[m], fontWeight: 600 }}>{m}</span></div>)}
+              </div>
+            )}
             {addGearOpen && (
               <div style={{ background: "#fff", border: "1px solid #d4c9b8", borderRadius: 12, padding: "16px", marginBottom: 8, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
                 <div style={{ fontSize: 11, color: memberColors[who === "All" ? "SaMeg" : who], fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}><Avatar name={who === "All" ? "SaMeg" : who} size={16} /> Adding item</div>
@@ -288,40 +330,51 @@ export default function App() {
                 <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={addGear}>Add Item</button><button className="clnk" onClick={() => setAddGearOpen(false)}>✕ Cancel</button></div>
               </div>
             )}
-            {GEAR_CATS.map(cat => {
+            {tileView && !drillCat && (() => {
+              const icons = { "Shelter & Sleep":"🏕️","Cooking & Fire":"🔥","Sports & Games":"⚽","Clothing & Personal":"👟","Safety & Health":"🩺","Other":"📦" };
+              return <TileGrid onDrill={setDrillCat} groups={GEAR_CATS.map(cat => { const items = visibleGear.filter(g=>(g.category||gearCategory(g.item))===cat); return { cat, color: gearCatColors[cat], icon: icons[cat]||"📦", items, countLabel:"packed", doneCount: items.filter(x=>x.packed).length }; }).filter(g=>g.items.length>0)} />;
+            })()}
+            {(!tileView || drillCat) && GEAR_CATS.map(cat => {
+              if (drillCat && drillCat !== cat) return null;
               const items = visibleGear.filter(g => (g.category || gearCategory(g.item)) === cat);
               if (!items.length) return null;
               const cc = gearCatColors[cat];
+              const collapsed = !drillCat && collapsedGear[cat];
               return (
-                <div key={cat} style={{ marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
-                    <div style={{ width: 3, height: 14, background: cc, borderRadius: 3 }} />
-                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: cc, textTransform: "uppercase" }}>{cat}</span>
-                    <span style={{ fontSize: 10, color: "#b0a090" }}>({items.filter(x => x.packed).length}/{items.length} packed)</span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                    {items.map(g => { const editing = egId === g.id; const conf = g.confirmed || {}; return (
-                      <div key={g.id}>
-                        <div className="row" style={rowBase(editing, g.packed ? "1px solid #7ab87a" : undefined)}>
-                          <button onClick={() => togglePacked(g.id, g.packed)} style={{ width: 20, height: 20, borderRadius: 5, border: g.packed ? "none" : "2px solid #b0c8b0", background: g.packed ? "#3a7a4a" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
-                            {g.packed && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900 }}>✓</span>}
-                          </button>
-                          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: g.packed ? "#a09080" : "#2d2a24", textDecoration: g.packed ? "line-through" : "none" }}>{g.item}</span>
-                          <FamilyChecks confirmed={conf} onToggle={m => toggleGearConfirm(g.id, m, conf[m])} />
-                          <IBtn emoji="✏️" title="Edit" onClick={() => editing ? setEgId(null) : (setEg({ item: g.item, assignedTo: g.assignedTo, category: g.category || gearCategory(g.item) }), setEgId(g.id), setAddGearOpen(false))} />
-                          <IBtn emoji="🗑" title="Delete" onClick={() => delGear(g.id)} />
-                        </div>
-                        {editing && <EditDrawer>
-                          <input value={eg.item} onChange={e => setEg(v => ({ ...v, item: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveGear(g.id)} style={IS} autoFocus />
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <select value={eg.category || gearCategory(eg.item || "")} onChange={e => setEg(v => ({ ...v, category: e.target.value }))} style={{ ...SS, flex: 1 }}>{GEAR_CATS.map(c => <option key={c}>{c}</option>)}</select>
-                            <select value={eg.assignedTo} onChange={e => setEg(v => ({ ...v, assignedTo: e.target.value }))} style={{ ...SS, flex: 1 }}>{MEMBERS.map(m => <option key={m}>{m}</option>)}</select>
+                <div key={cat} style={{ marginBottom: 10 }}>
+                  {!drillCat && (
+                    <button onClick={() => toggleGearGroup(cat)} style={{ display: "flex", alignItems: "center", gap: 7, width: "100%", background: "none", border: "none", cursor: "pointer", padding: "6px 2px", marginBottom: collapsed ? 0 : 6 }}>
+                      <div style={{ width: 3, height: 14, background: cc, borderRadius: 3, flexShrink: 0 }} />
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: cc, textTransform: "uppercase", flex: 1, textAlign: "left" }}>{cat}</span>
+                      <span style={{ fontSize: 10, color: "#b0a090" }}>({items.filter(x => x.packed).length}/{items.length})</span>
+                      <span style={{ fontSize: 12, color: cc, marginLeft: 6 }}>{collapsed ? "▶" : "▼"}</span>
+                    </button>
+                  )}
+                  {!collapsed && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                      {items.map(g => { const editing = egId === g.id; const conf = g.confirmed || {}; return (
+                        <div key={g.id}>
+                          <div className="row" style={rowBase(editing, g.packed ? "1px solid #7ab87a" : undefined)}>
+                            <button onClick={() => togglePacked(g.id, g.packed)} style={{ width: 20, height: 20, borderRadius: 5, border: g.packed ? "none" : "2px solid #b0c8b0", background: g.packed ? "#3a7a4a" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
+                              {g.packed && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900 }}>✓</span>}
+                            </button>
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: g.packed ? "#a09080" : "#2d2a24", textDecoration: g.packed ? "line-through" : "none" }}>{g.item}</span>
+                            <FamilyChecks confirmed={conf} onToggle={m => toggleGearConfirm(g.id, m, conf[m])} />
+                            <IBtn emoji="✏️" title="Edit" onClick={() => editing ? setEgId(null) : (setEg({ item: g.item, assignedTo: g.assignedTo, category: g.category || gearCategory(g.item) }), setEgId(g.id), setAddGearOpen(false))} />
+                            <IBtn emoji="🗑" title="Delete" onClick={() => delGear(g.id)} />
                           </div>
-                          <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={() => saveGear(g.id)}>Save</button><button className="clnk" onClick={() => setEgId(null)}>✕ Cancel</button></div>
-                        </EditDrawer>}
-                      </div>
-                    ); })}
-                  </div>
+                          {editing && <EditDrawer>
+                            <input value={eg.item} onChange={e => setEg(v => ({ ...v, item: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveGear(g.id)} style={IS} autoFocus />
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <select value={eg.category || gearCategory(eg.item || "")} onChange={e => setEg(v => ({ ...v, category: e.target.value }))} style={{ ...SS, flex: 1 }}>{GEAR_CATS.map(c => <option key={c}>{c}</option>)}</select>
+                              <select value={eg.assignedTo} onChange={e => setEg(v => ({ ...v, assignedTo: e.target.value }))} style={{ ...SS, flex: 1 }}>{MEMBERS.map(m => <option key={m}>{m}</option>)}</select>
+                            </div>
+                            <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={() => saveGear(g.id)}>Save</button><button className="clnk" onClick={() => setEgId(null)}>✕ Cancel</button></div>
+                          </EditDrawer>}
+                        </div>
+                      ); })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -333,8 +386,13 @@ export default function App() {
         {!loading && tab === "Meals" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 17 }}>Meal Plan 🍽️</span>
-              <button className="abtn" onClick={() => { setAddMealOpen(v => !v); setEmId(null); }}>+ Add Meal</button>
+              <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 17 }}>
+                {drillCat ? <button onClick={() => setDrillCat(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, fontFamily: "'Playfair Display',serif", color: "#2d2a24", padding: 0 }}>◀ {drillCat}</button> : "Meal Plan 🍽️"}
+              </span>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {!drillCat && <ViewToggle tileView={tileView} onSwitch={switchView} />}
+                <button className="abtn" onClick={() => { setAddMealOpen(v => !v); setEmId(null); }}>+ Add Meal</button>
+              </div>
             </div>
             {addMealOpen && (
               <div style={{ background: "#fff", border: "1px solid #d4c9b8", borderRadius: 12, padding: "16px", marginBottom: 8, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
@@ -347,7 +405,14 @@ export default function App() {
                 <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={addMeal}>Add Meal</button><button className="clnk" onClick={() => setAddMealOpen(false)}>✕ Cancel</button></div>
               </div>
             )}
-            {DAYS.map(day => { const dm = visibleMeals.filter(m => m.day === day); return (
+            {tileView && !drillCat && (() => {
+              const dc = {"Day 1 (Apr 4)":"#c45e38","Day 2 (Apr 5)":"#2e7d4f","Day 3 (Apr 6)":"#3a65a8"};
+              const di = {"Day 1 (Apr 4)":"🌊","Day 2 (Apr 5)":"🌲","Day 3 (Apr 6)":"☀️"};
+              return <TileGrid onDrill={setDrillCat} groups={DAYS.map(day => { const items = visibleMeals.filter(m=>m.day===day); return { cat:day, color:dc[day]||"#3a7a4a", icon:di[day]||"🍽️", items, countLabel:"meals", doneCount:items.length }; }).filter(g=>g.items.length>0)} />;
+            })()}
+            {(!tileView || drillCat) && DAYS.map(day => {
+              if (drillCat && drillCat !== day) return null;
+              const dm = visibleMeals.filter(m => m.day === day); return (
               <div key={day} style={{ marginBottom: 18 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", color: "#3a7a4a", textTransform: "uppercase", marginBottom: 7, paddingLeft: 2 }}>{day}</div>
                 {dm.length === 0
@@ -387,8 +452,13 @@ export default function App() {
         {!loading && tab === "Groceries" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 17 }}>Groceries 🛒 <span style={{ fontSize: 12, color: "#9a8a7a", fontFamily: "'DM Sans',sans-serif" }}>({bought}/{groceries.length})</span></span>
-              <button className="abtn" onClick={() => { setAddGrocOpen(v => !v); setGrpId(null); }}>+ Add</button>
+              <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 17 }}>
+                {drillCat ? <button onClick={() => setDrillCat(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, fontFamily: "'Playfair Display',serif", color: "#2d2a24", padding: 0 }}>◀ {drillCat}</button> : <>Groceries 🛒 <span style={{ fontSize: 12, color: "#9a8a7a", fontFamily: "'DM Sans',sans-serif" }}>({bought}/{groceries.length})</span></>}
+              </span>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {!drillCat && <ViewToggle tileView={tileView} onSwitch={switchView} />}
+                <button className="abtn" onClick={() => { setAddGrocOpen(v => !v); setGrpId(null); }}>+ Add</button>
+              </div>
             </div>
             <div style={{ background: "#fff", border: "1px solid #e8e0d4", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
               <div style={{ background: "#e8e0d4", borderRadius: 10, height: 7, overflow: "hidden" }}>
@@ -414,47 +484,56 @@ export default function App() {
                 <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={addGroc}>Add to List</button><button className="clnk" onClick={() => setAddGrocOpen(false)}>✕ Cancel</button></div>
               </div>
             )}
-            {GROCERY_CATS.map(cat => {
+            {tileView && !drillCat && (() => {
+              const icons = {"Vegetables":"🥦","Fruits":"🍎","Meat & Seafood":"🥩","Dairy":"🥛","Dry & Pantry":"🍝","Snacks & Drinks":"🥤","Other":"🛍️"};
+              return <TileGrid onDrill={setDrillCat} groups={GROCERY_CATS.map(cat => { const items = filteredGroceries.filter(g=>g.category===cat); return { cat, color:catColors[cat], icon:icons[cat]||"🛍️", items, countLabel:"bought", doneCount:items.filter(x=>x.bought).length }; }).filter(g=>g.items.length>0)} />;
+            })()}
+            {(!tileView || drillCat) && GROCERY_CATS.map(cat => {
+              if (drillCat && drillCat !== cat) return null;
               const items = filteredGroceries.filter(g => g.category === cat);
               if (!items.length) return null;
               const cc = catColors[cat];
+              const collapsed = !drillCat && collapsedGroc[cat];
               return (
-                <div key={cat} style={{ marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
-                    <div style={{ width: 3, height: 14, background: cc, borderRadius: 3 }} />
-                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: cc, textTransform: "uppercase" }}>{cat}</span>
+                <div key={cat} style={{ marginBottom: 10 }}>
+                  <button onClick={() => toggleGrocGroup(cat)} style={{ display: "flex", alignItems: "center", gap: 7, width: "100%", background: "none", border: "none", cursor: "pointer", padding: "6px 2px", marginBottom: collapsed ? 0 : 6 }}>
+                    <div style={{ width: 3, height: 14, background: cc, borderRadius: 3, flexShrink: 0 }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: cc, textTransform: "uppercase", flex: 1, textAlign: "left" }}>{cat}</span>
                     <span style={{ fontSize: 10, color: "#b0a090" }}>({items.filter(x => x.bought).length}/{items.length})</span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {items.map(g => { const conf = g.confirmed || {}; const editing = grpId === g.id; return (
-                      <div key={g.id}>
-                        <div className="row" style={rowBase(editing, g.bought ? "1px solid #7ab87a" : undefined)}>
-                          <button onClick={() => toggleBought(g.id, g.bought)} style={{ width: 20, height: 20, borderRadius: "50%", border: g.bought ? "none" : `2px solid ${cc}60`, background: g.bought ? cc : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
-                            {g.bought && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900 }}>✓</span>}
-                          </button>
-                          <div style={{ flex: 1 }}>
-                            <span style={{ fontSize: 13, fontWeight: 500, color: g.bought ? "#a09080" : "#2d2a24", textDecoration: g.bought ? "line-through" : "none" }}>{g.item}</span>
-                            {g.qty && <span style={{ fontSize: 11, color: "#9a8a7a", marginLeft: 6 }}>{g.qty}</span>}
-                            {g.forMeal && <div style={{ fontSize: 10, color: "#b0a090", marginTop: 1 }}>for: {g.forMeal}</div>}
+                    <span style={{ fontSize: 12, color: cc, marginLeft: 6 }}>{collapsed ? "▶" : "▼"}</span>
+                  </button>
+                  {!collapsed && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {items.map(g => { const conf = g.confirmed || {}; const editing = grpId === g.id; return (
+                        <div key={g.id}>
+                          <div className="row" style={rowBase(editing, g.bought ? "1px solid #7ab87a" : undefined)}>
+                            <button onClick={() => toggleBought(g.id, g.bought)} style={{ width: 20, height: 20, borderRadius: "50%", border: g.bought ? "none" : `2px solid ${cc}60`, background: g.bought ? cc : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
+                              {g.bought && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900 }}>✓</span>}
+                            </button>
+                            <div style={{ flex: 1 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: g.bought ? "#a09080" : "#2d2a24", textDecoration: g.bought ? "line-through" : "none" }}>{g.item}</span>
+                              {g.qty && <span style={{ fontSize: 11, color: "#9a8a7a", marginLeft: 6 }}>{g.qty}</span>}
+                              {g.forMeal && <div style={{ fontSize: 10, color: "#b0a090", marginTop: 1 }}>for: {g.forMeal}</div>}
+                            </div>
+                            <FamilyChecks confirmed={conf} onToggle={m => toggleGrocConfirm(g.id, m, conf[m])} />
+                            <IBtn emoji="✏️" title="Edit" onClick={() => editing ? setGrpId(null) : (setGr({ item: g.item, qty: g.qty || "", category: g.category, forMeal: g.forMeal || "" }), setGrpId(g.id), setAddGrocOpen(false))} />
+                            <IBtn emoji="🗑" title="Delete" onClick={() => delGroc(g.id)} />
                           </div>
-                          <FamilyChecks confirmed={conf} onToggle={m => toggleGrocConfirm(g.id, m, conf[m])} />
-                          <IBtn emoji="✏️" title="Edit" onClick={() => editing ? setGrpId(null) : (setGr({ item: g.item, qty: g.qty || "", category: g.category, forMeal: g.forMeal || "" }), setGrpId(g.id), setAddGrocOpen(false))} />
-                          <IBtn emoji="🗑" title="Delete" onClick={() => delGroc(g.id)} />
+                          {editing && <EditDrawer>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <input value={gr.item} onChange={e => setGr(v => ({ ...v, item: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveGroc(g.id)} style={{ ...IS, flex: 2 }} autoFocus />
+                              <input value={gr.qty} onChange={e => setGr(v => ({ ...v, qty: e.target.value }))} placeholder="Qty" style={{ ...IS, flex: 1 }} />
+                            </div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <select value={gr.category} onChange={e => setGr(v => ({ ...v, category: e.target.value }))} style={{ ...SS, flex: 1 }}>{GROCERY_CATS.map(c => <option key={c}>{c}</option>)}</select>
+                              <select value={gr.forMeal || ""} onChange={e => setGr(v => ({ ...v, forMeal: e.target.value }))} style={{ ...SS, flex: 1 }}>{mealNames.map(mn => <option key={mn} value={mn === "(General)" ? "" : mn}>{mn}</option>)}</select>
+                            </div>
+                            <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={() => saveGroc(g.id)}>Save</button><button className="clnk" onClick={() => setGrpId(null)}>✕ Cancel</button></div>
+                          </EditDrawer>}
                         </div>
-                        {editing && <EditDrawer>
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <input value={gr.item} onChange={e => setGr(v => ({ ...v, item: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveGroc(g.id)} style={{ ...IS, flex: 2 }} autoFocus />
-                            <input value={gr.qty} onChange={e => setGr(v => ({ ...v, qty: e.target.value }))} placeholder="Qty" style={{ ...IS, flex: 1 }} />
-                          </div>
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <select value={gr.category} onChange={e => setGr(v => ({ ...v, category: e.target.value }))} style={{ ...SS, flex: 1 }}>{GROCERY_CATS.map(c => <option key={c}>{c}</option>)}</select>
-                            <select value={gr.forMeal || ""} onChange={e => setGr(v => ({ ...v, forMeal: e.target.value }))} style={{ ...SS, flex: 1 }}>{mealNames.map(mn => <option key={mn} value={mn === "(General)" ? "" : mn}>{mn}</option>)}</select>
-                          </div>
-                          <div style={{ display: "flex", gap: 8 }}><button className="sbtn" onClick={() => saveGroc(g.id)}>Save</button><button className="clnk" onClick={() => setGrpId(null)}>✕ Cancel</button></div>
-                        </EditDrawer>}
-                      </div>
-                    ); })}
-                  </div>
+                      ); })}
+                    </div>
+                  )}
                 </div>
               );
             })}
