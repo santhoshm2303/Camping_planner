@@ -58,6 +58,27 @@ const FamilyChecks = ({ confirmed, onToggle }) => (
   </div>
 );
 
+
+const FamilyChecksWithEdit = ({ confirmed, onToggle, onEdit }) => (
+  <div style={{ display: "flex", gap: 5, alignItems: "center", flexShrink: 0 }}>
+    {["SaMeg","PraKrithi","NagKav"].map(m => {
+      const checked = confirmed?.[m] || false;
+      const c = memberColors[m];
+      return (
+        <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <button onClick={() => onToggle(m)} style={{ width:24, height:24, borderRadius:6, flexShrink:0, cursor:"pointer", border:checked?"none":`2px solid ${c}60`, background:checked?c:"#fff", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.15s", boxShadow:checked?`0 1px 4px ${c}60`:"none" }}>
+              {checked && <span style={{ fontSize:11, color:"#fff", fontWeight:900 }}>✓</span>}
+            </button>
+            <button onClick={() => onEdit(m)} style={{ background:checked?`${c}18`:"#f5f0e8", border:`1px solid ${checked?c+"40":"#e0d8cc"}`, borderRadius:5, width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:10, flexShrink:0 }}>✏️</button>
+          </div>
+          <span style={{ fontSize:8, fontWeight:700, color:checked?c:"#c0b8b0" }}>{m.slice(0,2)}</span>
+        </div>
+      );
+    })}
+  </div>
+);
+
 const EditDrawer = ({ children }) => (
   <div style={{ background: "#fffdf8", border: "1px solid #d4c9b8", borderTop: "none", borderRadius: "0 0 12px 12px", padding: "14px", display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 6px 20px rgba(0,0,0,0.08)", marginBottom: 6 }}>
     {children}
@@ -111,6 +132,95 @@ const TileGrid = ({ groups, onDrill }) => (
   </div>
 );
 
+
+const fmt = (n) => `A$${(n || 0).toFixed(2)}`;
+
+const BudgetSummary = ({ groceries, memberColors, catColors, onBack }) => {
+  const itemsWithCost = groceries.map(g => ({ ...g, total: g.bought ? (parseFloat(g.actualPrice) || parseFloat(g.price) || 0) : 0, buyers: ["SaMeg","PraKrithi","NagKav"].filter(m => g.confirmed?.[m]), actualQty: g.actualQty || g.qty || "" }));
+  const grandTotal = itemsWithCost.reduce((s,g) => s+g.total, 0);
+  const byEqual = {"SaMeg":0,"PraKrithi":0,"NagKav":0};
+  const byBuyer = {"SaMeg":0,"PraKrithi":0,"NagKav":0};
+  itemsWithCost.forEach(g => {
+    const buyers = g.buyers.length ? g.buyers : ["SaMeg","PraKrithi","NagKav"];
+    buyers.forEach(m => { byEqual[m] += g.total/buyers.length; });
+    if (g.buyers.length) { const share = g.total/g.buyers.length; g.buyers.forEach(m => { byBuyer[m] += share; }); }
+  });
+  const byCat = {};
+  itemsWithCost.forEach(g => { byCat[g.category] = (byCat[g.category]||0)+g.total; });
+  return (
+    <div style={{ minHeight:"100vh", background:"#f5f0e8", fontFamily:"'DM Sans',sans-serif", color:"#2d2a24", paddingBottom:60 }}>
+      <div style={{ background:"linear-gradient(135deg,#3a65a8,#2a4a88)", padding:"28px 20px 24px" }}>
+        <button onClick={onBack} style={{ background:"rgba(255,255,255,0.2)", border:"1px solid rgba(255,255,255,0.4)", borderRadius:20, padding:"6px 14px", color:"#fff", fontSize:12, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", marginBottom:14 }}>◀ Back to Groceries</button>
+        <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:900, color:"#fff", marginBottom:4 }}>Budget Summary 💰</h1>
+        <div style={{ fontSize:12, color:"rgba(255,255,255,0.8)" }}>Lake Leschenaultia · April 4–6, 2026</div>
+      </div>
+      <div style={{ padding:"16px" }}>
+        <div style={{ background:"linear-gradient(135deg,#3a65a8,#2a4a88)", borderRadius:14, padding:"18px", textAlign:"center", marginBottom:16, boxShadow:"0 4px 16px rgba(58,101,168,0.3)" }}>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,0.7)", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:4 }}>Grand Total</div>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:38, fontWeight:900, color:"#fff" }}>{fmt(grandTotal)}</div>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,0.6)", marginTop:4 }}>{itemsWithCost.filter(x=>x.bought).length}/{groceries.length} items bought</div>
+        </div>
+        <div style={{ background:"#fff", border:"1px solid #e8e0d4", borderRadius:14, padding:"16px", marginBottom:14 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"#9a8a7a", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:12 }}>Cost per Family</div>
+          <div style={{ fontSize:11, color:"#3a65a8", fontWeight:700, marginBottom:8 }}>① Split equally among buyers</div>
+          {["SaMeg","PraKrithi","NagKav"].map(m => (
+            <div key={m} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <div style={{ width:32, height:32, borderRadius:"50%", background:memberColors[m], display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11, fontWeight:700, flexShrink:0 }}>{m.slice(0,2)}</div>
+              <div style={{ flex:1 }}><div style={{ fontSize:13, fontWeight:600 }}>{m}</div><div style={{ background:"#e8e0d4", borderRadius:10, height:5, marginTop:3, overflow:"hidden" }}><div style={{ width:`${grandTotal ? byEqual[m]/grandTotal*100 : 0}%`, height:"100%", background:memberColors[m], borderRadius:10 }} /></div></div>
+              <div style={{ fontSize:14, fontWeight:700, color:memberColors[m], minWidth:64, textAlign:"right" }}>{fmt(byEqual[m])}</div>
+            </div>
+          ))}
+          <div style={{ borderTop:"1px dashed #e8e0d4", margin:"12px 0" }} />
+          <div style={{ fontSize:11, color:"#c45e38", fontWeight:700, marginBottom:8 }}>② Full cost to whoever buys it</div>
+          {["SaMeg","PraKrithi","NagKav"].map(m => (
+            <div key={m} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <div style={{ width:32, height:32, borderRadius:"50%", background:memberColors[m], display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11, fontWeight:700, flexShrink:0 }}>{m.slice(0,2)}</div>
+              <div style={{ flex:1 }}><div style={{ fontSize:13, fontWeight:600 }}>{m}</div><div style={{ background:"#e8e0d4", borderRadius:10, height:5, marginTop:3, overflow:"hidden" }}><div style={{ width:`${grandTotal ? byBuyer[m]/grandTotal*100 : 0}%`, height:"100%", background:memberColors[m], borderRadius:10 }} /></div></div>
+              <div style={{ fontSize:14, fontWeight:700, color:memberColors[m], minWidth:64, textAlign:"right" }}>{fmt(byBuyer[m])}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background:"#fff", border:"1px solid #e8e0d4", borderRadius:14, padding:"16px", marginBottom:14 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"#9a8a7a", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:12 }}>By Category</div>
+          {Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,total]) => (
+            <div key={cat} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <div style={{ width:3, height:30, background:catColors[cat]||"#888", borderRadius:3, flexShrink:0 }} />
+              <div style={{ flex:1 }}><div style={{ fontSize:12, fontWeight:600 }}>{cat}</div><div style={{ background:"#e8e0d4", borderRadius:10, height:5, marginTop:3, overflow:"hidden" }}><div style={{ width:`${grandTotal ? total/grandTotal*100 : 0}%`, height:"100%", background:catColors[cat]||"#888", borderRadius:10 }} /></div></div>
+              <div style={{ fontSize:13, fontWeight:700, color:catColors[cat]||"#888", minWidth:64, textAlign:"right" }}>{fmt(total)}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background:"#fff", border:"1px solid #e8e0d4", borderRadius:14, padding:"16px" }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"#9a8a7a", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:12 }}>Item Breakdown</div>
+          {itemsWithCost.sort((a,b)=>b.total-a.total).map(g => (
+            <div key={g.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid #f0ece4", opacity: g.bought ? 1 : 0.45 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13, fontWeight:500, display:"flex", alignItems:"center", gap:6 }}>
+                  {g.item}
+                  {!g.bought && <span style={{ fontSize:9, color:"#b0a090", fontWeight:600, background:"#f0ece4", borderRadius:8, padding:"1px 6px" }}>not bought yet</span>}
+                </div>
+                <div style={{ fontSize:10, color:"#b0a090", marginTop:2 }}>
+                  {g.actualQty ? <span style={{ color:"#3a7a4a", fontWeight:600 }}>{g.actualQty}</span> : g.qty ? <span>{g.qty}</span> : null}
+                  {(g.actualQty || g.qty) && " · "}
+                  <span style={{ color:catColors[g.category]||"#888" }}>{g.category}</span>
+                  {g.buyers.length>0 && <span> · {g.buyers.join(", ")}</span>}
+                </div>
+              </div>
+              <div style={{ fontSize:14, fontWeight:700, color: g.bought ? "#2d2a24" : "#b0a090", minWidth:64, textAlign:"right" }}>
+                {g.bought ? fmt(g.total) : <span style={{ fontSize:11 }}>est. {fmt(parseFloat(g.price)||0)}</span>}
+              </div>
+            </div>
+          ))}
+          <div style={{ display:"flex", justifyContent:"space-between", paddingTop:10, marginTop:4 }}>
+            <span style={{ fontSize:13, fontWeight:700 }}>Total</span>
+            <span style={{ fontSize:15, fontWeight:900, color:"#3a65a8", fontFamily:"'Playfair Display',serif" }}>{fmt(grandTotal)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [tab, setTab] = useState("Overview");
   const [who, setWho] = useState("SaMeg");
@@ -139,8 +249,9 @@ export default function App() {
 
   const [grpId, setGrpId] = useState(null); const [gr, setGr] = useState({});
   const [addGrocOpen, setAddGrocOpen] = useState(false);
-  const [ggItem, setGgItem] = useState(""); const [ggQty, setGgQty] = useState(""); const [ggCat, setGgCat] = useState("Vegetables"); const [ggMeal, setGgMeal] = useState("");
+  const [ggItem, setGgItem] = useState(""); const [ggQty, setGgQty] = useState(""); const [ggCat, setGgCat] = useState("Vegetables"); const [ggMeal, setGgMeal] = useState(""); const [ggPrice, setGgPrice] = useState("");
   const [grocFilter, setGrocFilter] = useState("All");
+  const [showBudget, setShowBudget] = useState(false);
 
   const [eaId, setEaId] = useState(null); const [ea, setEa] = useState({});
   const [addActOpen, setAddActOpen] = useState(false);
@@ -174,9 +285,41 @@ export default function App() {
   const delMeal = async (id) => { await deleteDoc(doc(db, "meals", id)); setEmId(null); };
 
   // Groceries
-  const toggleBought = (id, cur) => updateDoc(doc(db, "groceries", id), { bought: !cur });
+  const toggleBought = (id, cur, item) => {
+    if (cur) {
+      updateDoc(doc(db, "groceries", id), { bought: false, actualQty: "", actualPrice: 0 });
+    } else {
+      setPurchasePopup({ id, item: item.item, plannedPrice: item.price || 0, member: null });
+      setActualQty(item.qty || "");
+      setActualPrice(item.price ? String(item.price) : "");
+    }
+  };
+  const openFamilyEdit = (id, member, item) => {
+    if (!item.confirmed?.[member]) updateDoc(doc(db, "groceries", id), { [`confirmed.${member}`]: true });
+    setPurchasePopup({ id, item: item.item, plannedPrice: item.price || 0, member });
+    setActualQty(item.memberSpend?.[member]?.qty || item.qty || "");
+    setActualPrice(item.memberSpend?.[member]?.price ? String(item.memberSpend[member].price) : item.price ? String(item.price) : "");
+  };
+  const confirmPurchase = () => {
+    if (!purchasePopup) return;
+    const g = groceries.find(x => x.id === purchasePopup.id); if (!g) return;
+    const memberSpend = { ...(g.memberSpend || {}) };
+    if (purchasePopup.member) {
+      memberSpend[purchasePopup.member] = { qty: actualQty, price: parseFloat(actualPrice) || 0 };
+      const totalActual = Object.values(memberSpend).reduce((s, v) => s + (v.price || 0), 0);
+      updateDoc(doc(db, "groceries", purchasePopup.id), { bought: true, actualQty, actualPrice: totalActual, memberSpend });
+    } else {
+      updateDoc(doc(db, "groceries", purchasePopup.id), { bought: true, actualQty, actualPrice: parseFloat(actualPrice) || g.price || 0 });
+    }
+    setPurchasePopup(null); setActualQty(""); setActualPrice("");
+  };
+  const skipPurchase = () => {
+    if (!purchasePopup) return;
+    updateDoc(doc(db, "groceries", purchasePopup.id), { bought: true });
+    setPurchasePopup(null); setActualQty(""); setActualPrice("");
+  };
   const toggleGrocConfirm = (id, member, cur) => updateDoc(doc(db, "groceries", id), { [`confirmed.${member}`]: !cur });
-  const addGroc = async () => { if (!ggItem.trim()) return; await addDoc(collection(db, "groceries"), { item: ggItem, qty: ggQty, category: ggCat, forMeal: ggMeal, addedBy: who, bought: false, confirmed: noConfirm }); setGgItem(""); setGgQty(""); setGgMeal(""); setAddGrocOpen(false); };
+  const addGroc = async () => { if (!ggItem.trim()) return; await addDoc(collection(db, "groceries"), { item: ggItem, qty: ggQty, price: parseFloat(ggPrice)||0, category: ggCat, forMeal: ggMeal, addedBy: who, bought: false, confirmed: noConfirm }); setGgItem(""); setGgQty(""); setGgMeal(""); setGgPrice(""); setAddGrocOpen(false); };
   const saveGroc = async (id) => { if (!gr.item?.trim()) return; await updateDoc(doc(db, "groceries", id), gr); setGrpId(null); };
   const delGroc = async (id) => { await deleteDoc(doc(db, "groceries", id)); setGrpId(null); };
 
@@ -202,6 +345,8 @@ export default function App() {
 
   const filteredGroceries = grocFilter === "All" ? visibleGroceries : grocFilter === "Bought" ? visibleGroceries.filter(g => g.bought) : grocFilter === "Needed" ? visibleGroceries.filter(g => !g.bought) : visibleGroceries.filter(g => g.category === grocFilter);
   const daysLeft = Math.max(0, Math.ceil((new Date("2026-04-04") - new Date()) / 86400000));
+
+  if (showBudget) return <BudgetSummary groceries={groceries} memberColors={memberColors} catColors={catColors} onBack={() => setShowBudget(false)} />;
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f0e8", fontFamily: "'DM Sans',sans-serif", color: "#2d2a24", paddingBottom: 60 }}>
@@ -457,6 +602,7 @@ export default function App() {
               </span>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 {!drillCat && <ViewToggle tileView={tileView} onSwitch={switchView} />}
+                <button onClick={() => setShowBudget(true)} style={{ background: "#e2eaf8", color: "#3a65a8", border: "1.5px solid #3a65a8", borderRadius: 20, padding: "7px 13px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>💰 Budget</button>
                 <button className="abtn" onClick={() => { setAddGrocOpen(v => !v); setGrpId(null); }}>+ Add</button>
               </div>
             </div>
@@ -476,6 +622,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 8 }}>
                   <input value={ggItem} onChange={e => setGgItem(e.target.value)} placeholder="Item name" style={{ ...IS, flex: 2 }} autoFocus />
                   <input value={ggQty} onChange={e => setGgQty(e.target.value)} placeholder="Qty" style={{ ...IS, flex: 1 }} />
+                  <input value={ggPrice} onChange={e => setGgPrice(e.target.value)} placeholder="A$" type="number" min="0" step="0.50" style={{ ...IS, flex: 1 }} />
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <select value={ggCat} onChange={e => setGgCat(e.target.value)} style={{ ...SS, flex: 1 }}>{GROCERY_CATS.map(c => <option key={c}>{c}</option>)}</select>
@@ -507,7 +654,7 @@ export default function App() {
                       {items.map(g => { const conf = g.confirmed || {}; const editing = grpId === g.id; return (
                         <div key={g.id}>
                           <div className="row" style={rowBase(editing, g.bought ? "1px solid #7ab87a" : undefined)}>
-                            <button onClick={() => toggleBought(g.id, g.bought)} style={{ width: 20, height: 20, borderRadius: "50%", border: g.bought ? "none" : `2px solid ${cc}60`, background: g.bought ? cc : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
+                            <button onClick={() => toggleBought(g.id, g.bought, g)} style={{ width: 20, height: 20, borderRadius: "50%", border: g.bought ? "none" : `2px solid ${cc}60`, background: g.bought ? cc : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
                               {g.bought && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900 }}>✓</span>}
                             </button>
                             <div style={{ flex: 1 }}>
@@ -515,14 +662,14 @@ export default function App() {
                               {g.qty && <span style={{ fontSize: 11, color: "#9a8a7a", marginLeft: 6 }}>{g.qty}</span>}
                               {g.forMeal && <div style={{ fontSize: 10, color: "#b0a090", marginTop: 1 }}>for: {g.forMeal}</div>}
                             </div>
-                            <FamilyChecks confirmed={conf} onToggle={m => toggleGrocConfirm(g.id, m, conf[m])} />
-                            <IBtn emoji="✏️" title="Edit" onClick={() => editing ? setGrpId(null) : (setGr({ item: g.item, qty: g.qty || "", category: g.category, forMeal: g.forMeal || "" }), setGrpId(g.id), setAddGrocOpen(false))} />
+                            <FamilyChecksWithEdit confirmed={conf} onToggle={m => toggleGrocConfirm(g.id, m, conf[m])} onEdit={m => openFamilyEdit(g.id, m, g)} />
                             <IBtn emoji="🗑" title="Delete" onClick={() => delGroc(g.id)} />
                           </div>
                           {editing && <EditDrawer>
                             <div style={{ display: "flex", gap: 8 }}>
                               <input value={gr.item} onChange={e => setGr(v => ({ ...v, item: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveGroc(g.id)} style={{ ...IS, flex: 2 }} autoFocus />
                               <input value={gr.qty} onChange={e => setGr(v => ({ ...v, qty: e.target.value }))} placeholder="Qty" style={{ ...IS, flex: 1 }} />
+                              <input value={gr.price || ""} onChange={e => setGr(v => ({ ...v, price: parseFloat(e.target.value)||0 }))} placeholder="A$" type="number" min="0" step="0.50" style={{ ...IS, flex: 1 }} />
                             </div>
                             <div style={{ display: "flex", gap: 8 }}>
                               <select value={gr.category} onChange={e => setGr(v => ({ ...v, category: e.target.value }))} style={{ ...SS, flex: 1 }}>{GROCERY_CATS.map(c => <option key={c}>{c}</option>)}</select>
@@ -539,6 +686,33 @@ export default function App() {
             })}
             {filteredGroceries.length === 0 && <div style={{ background: "#fff", border: "1px dashed #d4c9b8", borderRadius: 11, padding: "20px", color: "#b0a090", fontSize: 13, textAlign: "center" }}>Nothing here — tap + Add!</div>}
             <p style={{ marginTop: 8, fontSize: 11, color: "#b0a090", textAlign: "center" }}>Circle = bought · Tap coloured boxes to volunteer · ✏️ edit · 🗑 delete</p>
+          </div>
+        )}
+
+
+        {/* PURCHASE POPUP */}
+        {purchasePopup && (
+          <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
+            <div style={{ background:"#fff", borderRadius:18, padding:"24px", width:"100%", maxWidth:340, boxShadow:"0 20px 60px rgba(0,0,0,0.3)" }}>
+              {purchasePopup?.member ? <div style={{ fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6, color:memberColors[purchasePopup.member] }}>✏️ {purchasePopup.member}'s spend</div> : <div style={{ fontSize:11, color:"#9a8a7a", fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6 }}>🛒 Marking as bought</div>}
+              <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, color:"#2d2a24", marginBottom:4 }}>{purchasePopup.item}</div>
+              {purchasePopup.plannedPrice > 0 && <div style={{ fontSize:12, color:"#9a8a7a", marginBottom:16 }}>Planned: A${parseFloat(purchasePopup.plannedPrice).toFixed(2)}</div>}
+              <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:18 }}>
+                <div>
+                  <label style={{ fontSize:11, fontWeight:700, color:"#6a6058", letterSpacing:"0.08em", textTransform:"uppercase", display:"block", marginBottom:5 }}>Actual Qty / Description</label>
+                  <input value={actualQty} onChange={e => setActualQty(e.target.value)} placeholder="e.g. 1.2 kg" style={{ background:"#fff", border:"1px solid #d4c9b8", borderRadius:8, padding:"9px 12px", color:"#2d2a24", fontSize:13, fontFamily:"'DM Sans',sans-serif", outline:"none", width:"100%" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, fontWeight:700, color:"#6a6058", letterSpacing:"0.08em", textTransform:"uppercase", display:"block", marginBottom:5 }}>Actual Amount Paid (A$)</label>
+                  <input value={actualPrice} onChange={e => setActualPrice(e.target.value)} placeholder="e.g. 12.50" type="number" min="0" step="0.50" style={{ background:"#fff", border:"1px solid #d4c9b8", borderRadius:8, padding:"9px 12px", color:"#2d2a24", fontSize:13, fontFamily:"'DM Sans',sans-serif", outline:"none", width:"100%" }} autoFocus />
+                </div>
+              </div>
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={confirmPurchase} style={{ flex:1, background:"#3a7a4a", color:"#fff", border:"none", borderRadius:10, padding:"12px", fontWeight:700, fontSize:14, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>✓ Confirm</button>
+                <button onClick={skipPurchase} style={{ flex:1, background:"#f0ece4", color:"#6a6058", border:"1px solid #d4c9b8", borderRadius:10, padding:"12px", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>Skip</button>
+              </div>
+              <button onClick={() => setPurchasePopup(null)} style={{ width:"100%", background:"transparent", border:"none", color:"#b0a090", fontSize:12, cursor:"pointer", marginTop:10, fontFamily:"'DM Sans',sans-serif" }}>✕ Cancel</button>
+            </div>
           </div>
         )}
 

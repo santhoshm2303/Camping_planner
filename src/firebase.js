@@ -31,14 +31,14 @@ const SEED_MEALS = [
   { day: "Day 3 (Apr 6)", meal: "Dinner", name: "Campfire chili", chef: "NagKav", confirmed: NC },
 ];
 const SEED_GROCERIES = [
-  { item: "Potatoes", qty: "1 kg", category: "Vegetables", forMeal: "Foil packet veggies & chicken", addedBy: "PraKrithi", bought: false, confirmed: NC },
-  { item: "Zucchini", qty: "3 pcs", category: "Vegetables", forMeal: "Foil packet veggies & chicken", addedBy: "PraKrithi", bought: false, confirmed: NC },
-  { item: "Chicken thighs", qty: "1.5 kg", category: "Meat & Seafood", forMeal: "Foil packet veggies & chicken", addedBy: "NagKav", bought: false, confirmed: NC },
-  { item: "Eggs", qty: "12", category: "Dairy", forMeal: "Scrambled eggs & toast", addedBy: "SaMeg", bought: false, confirmed: NC },
-  { item: "Bread loaf", qty: "1", category: "Dry & Pantry", forMeal: "Scrambled eggs & toast", addedBy: "SaMeg", bought: false, confirmed: NC },
-  { item: "Hot dogs", qty: "2 packs", category: "Meat & Seafood", forMeal: "Hot dogs & s'mores", addedBy: "NagKav", bought: false, confirmed: NC },
-  { item: "Pancake mix", qty: "1 box", category: "Dry & Pantry", forMeal: "Pancakes & bacon", addedBy: "SaMeg", bought: false, confirmed: NC },
-  { item: "Bacon", qty: "500g", category: "Meat & Seafood", forMeal: "Pancakes & bacon", addedBy: "SaMeg", bought: false, confirmed: NC },
+  { item: "Potatoes", qty: "1 kg", price: 3.5, category: "Vegetables", forMeal: "Foil packet veggies & chicken", addedBy: "PraKrithi", bought: false, confirmed: NC },
+  { item: "Zucchini", qty: "3 pcs", price: 2.0, category: "Vegetables", forMeal: "Foil packet veggies & chicken", addedBy: "PraKrithi", bought: false, confirmed: NC },
+  { item: "Chicken thighs", qty: "1.5 kg", price: 12.0, category: "Meat & Seafood", forMeal: "Foil packet veggies & chicken", addedBy: "NagKav", bought: false, confirmed: NC },
+  { item: "Eggs", qty: "12", price: 5.5, category: "Dairy", forMeal: "Scrambled eggs & toast", addedBy: "SaMeg", bought: false, confirmed: NC },
+  { item: "Bread loaf", qty: "1", price: 4.0, category: "Dry & Pantry", forMeal: "Scrambled eggs & toast", addedBy: "SaMeg", bought: false, confirmed: NC },
+  { item: "Hot dogs", qty: "2 packs", price: 6.0, category: "Meat & Seafood", forMeal: "Hot dogs & s'mores", addedBy: "NagKav", bought: false, confirmed: NC },
+  { item: "Pancake mix", qty: "1 box", price: 4.5, category: "Dry & Pantry", forMeal: "Pancakes & bacon", addedBy: "SaMeg", bought: false, confirmed: NC },
+  { item: "Bacon", qty: "500g", price: 8.0, category: "Meat & Seafood", forMeal: "Pancakes & bacon", addedBy: "SaMeg", bought: false, confirmed: NC },
 ];
 const SEED_ACTIVITIES = [
   { name: "Lake swimming", day: "Day 1 (Apr 4)", suggestedBy: "SaMeg", votes: 4, votedBy: [] },
