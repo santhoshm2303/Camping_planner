@@ -252,6 +252,9 @@ export default function App() {
   const [ggItem, setGgItem] = useState(""); const [ggQty, setGgQty] = useState(""); const [ggCat, setGgCat] = useState("Vegetables"); const [ggMeal, setGgMeal] = useState(""); const [ggPrice, setGgPrice] = useState("");
   const [grocFilter, setGrocFilter] = useState("All");
   const [showBudget, setShowBudget] = useState(false);
+  const [purchasePopup, setPurchasePopup] = useState(null);
+  const [actualQty, setActualQty] = useState("");
+  const [actualPrice, setActualPrice] = useState("");
 
   const [eaId, setEaId] = useState(null); const [ea, setEa] = useState({});
   const [addActOpen, setAddActOpen] = useState(false);
