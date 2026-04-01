@@ -661,9 +661,31 @@ export default function App() {
                               {g.bought && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900 }}>✓</span>}
                             </button>
                             <div style={{ flex: 1 }}>
-                              <span style={{ fontSize: 13, fontWeight: 500, color: g.bought ? "#a09080" : "#2d2a24", textDecoration: g.bought ? "line-through" : "none" }}>{g.item}</span>
-                              {g.qty && <span style={{ fontSize: 11, color: "#9a8a7a", marginLeft: 6 }}>{g.qty}</span>}
-                              {g.forMeal && <div style={{ fontSize: 10, color: "#b0a090", marginTop: 1 }}>for: {g.forMeal}</div>}
+                              {/* Item name + planned/actual price */}
+                              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+                                <span style={{ fontSize: 13, fontWeight: 500, color: g.bought ? "#a09080" : "#2d2a24", textDecoration: g.bought ? "line-through" : "none" }}>{g.item}</span>
+                                {g.qty && <span style={{ fontSize: 11, color: "#9a8a7a" }}>{g.qty}</span>}
+                                {g.bought && g.actualPrice > 0
+                                  ? <span style={{ fontSize: 11, fontWeight: 700, color: "#3a7a4a" }}>A${parseFloat(g.actualPrice).toFixed(2)} ✓</span>
+                                  : g.price > 0 && <span style={{ fontSize: 11, fontWeight: 700, color: "#3a65a8" }}>A${parseFloat(g.price).toFixed(2)}</span>
+                                }
+                              </div>
+                              {/* Per-family spend badges */}
+                              {g.memberSpend && Object.keys(g.memberSpend).length > 0 && (
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                                  {Object.entries(g.memberSpend).map(([m, v]) => (
+                                    <span key={m} style={{ fontSize: 10, background: (memberColors[m] || "#888") + "18", color: memberColors[m] || "#888", border: `1px solid ${(memberColors[m] || "#888")}40`, borderRadius: 8, padding: "1px 7px", fontWeight: 600 }}>
+                                      {m.slice(0,2)}: {v.qty ? v.qty + " · " : ""}A${(v.price || 0).toFixed(2)}
+                                    </span>
+                                  ))}
+                                  {Object.keys(g.memberSpend).length > 1 && (
+                                    <span style={{ fontSize: 10, background: "#f0ece4", color: "#6a6058", border: "1px solid #d4c9b8", borderRadius: 8, padding: "1px 7px", fontWeight: 700 }}>
+                                      Total: A${Object.values(g.memberSpend).reduce((s,v) => s+(v.price||0), 0).toFixed(2)}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {g.forMeal && <div style={{ fontSize: 10, color: "#b0a090", marginTop: 2 }}>for: {g.forMeal}</div>}
                             </div>
                             <FamilyChecksWithEdit confirmed={conf} onToggle={m => toggleGrocConfirm(g.id, m, conf[m])} onEdit={m => openFamilyEdit(g.id, m, g)} />
                             <IBtn emoji="🗑" title="Delete" onClick={() => delGroc(g.id)} />
